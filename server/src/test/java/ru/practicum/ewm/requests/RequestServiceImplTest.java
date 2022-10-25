@@ -30,6 +30,7 @@ public class RequestServiceImplTest {
     private final CommonService commonService = Mockito.mock(CommonService.class);
     private final RequestService requestService = new RequestServiceImpl(requestRepository, commonService);
     private User user1;
+    private User user2;
     private UserDto userDto1;
     private Event event1;
     private Request request;
@@ -40,6 +41,11 @@ public class RequestServiceImplTest {
         user1 = User.builder()
                 .id(91L)
                 .name("Test1")
+                .email("qwerty@qqq.ru")
+                .build();
+        user2 = User.builder()
+                .id(11L)
+                .name("Test2")
                 .email("qwerty@qqq.ru")
                 .build();
         userDto1 = UserDto.builder()
@@ -108,14 +114,14 @@ public class RequestServiceImplTest {
     void createRequestForUser() {
         event1.setState(EventState.PUBLISHED);
         when(commonService.getUserInDb(anyLong()))
-                .thenReturn(user1);
+                .thenReturn(user2);
         when(commonService.getEventInDb(anyLong()))
                 .thenReturn(event1);
         when(requestRepository.findAllByRequesterAndEventId(any(User.class), any(Event.class)))
-                .thenReturn(null);
+                .thenReturn(Collections.emptyList());
         when(requestRepository.save(any(Request.class)))
                 .thenReturn(request);
-        RequestDto testRequest = requestService.createRequestForUser(user1.getId(), event1.getId());
+        RequestDto testRequest = requestService.createRequestForUser(user2.getId(), event1.getId());
         assertThat(testRequest, equalTo(requestDto));
         verify(commonService, times(1))
                 .getUserInDb(anyLong());

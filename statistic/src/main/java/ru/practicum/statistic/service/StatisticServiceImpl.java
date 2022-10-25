@@ -26,8 +26,8 @@ public class StatisticServiceImpl implements StatisticService {
         } catch (DataIntegrityViolationException e) {
             throw new RuntimeException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Save statistic method", "statistic category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Save statistic method", "statistic category"));
         }
     }
 

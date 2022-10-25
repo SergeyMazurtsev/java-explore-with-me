@@ -93,7 +93,7 @@ public class RequestPrivateControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(requestDto1.getId()), Long.class))
                 .andExpect(jsonPath("$.created",
                         is(dateTimeFormatter.format(requestDto1.getCreated()))));

@@ -11,7 +11,6 @@ import ru.practicum.ewm.events.dto.EventDtoOutFull;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public interface AdminService {
     UserDto createUser(UserDto userDto);

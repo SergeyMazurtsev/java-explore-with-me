@@ -2,8 +2,6 @@ package ru.practicum.ewm.events.dto;
 
 import lombok.*;
 
-import javax.persistence.*;
-
 @Getter
 @Setter
 @ToString

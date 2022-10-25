@@ -7,14 +7,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.practicum.ewm.exceptions.dto.ApiError;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.Collections;
 
 @RestControllerAdvice
 public class ErrorHandler {
     @ExceptionHandler
     public ResponseEntity<ApiError> notFoundException(final NotFoundException e) {
         return new ResponseEntity<>(ApiError.builder()
-                .errors(Arrays.asList(e.getStackTrace()))
+                .errors(Collections.singletonList("Error"))
                 .message(e.getMessage())
                 .reason("The required object was not found.")
                 .status(HttpStatus.NOT_FOUND.toString())
@@ -26,7 +26,7 @@ public class ErrorHandler {
     @ExceptionHandler
     public ResponseEntity<ApiError> integrityViolationException(final IntegrityViolationException e) {
         return new ResponseEntity<>(ApiError.builder()
-                .errors(Arrays.asList(e.getStackTrace()))
+                .errors(Collections.singletonList("Error"))
                 .message(e.getMessage())
                 .reason("Integrity constraint has been violated")
                 .status(HttpStatus.CONFLICT.toString())
@@ -38,7 +38,7 @@ public class ErrorHandler {
     @ExceptionHandler
     public ResponseEntity<ApiError> badRequestException(final ValidationException e) {
         return new ResponseEntity<>(ApiError.builder()
-                .errors(Arrays.asList(e.getStackTrace()))
+                .errors(Collections.singletonList("Error"))
                 .message(e.getMessage())
                 .reason("For the requested operation the conditions are not met.")
                 .status(HttpStatus.BAD_REQUEST.toString())

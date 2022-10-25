@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.practicum.ewm.compilations.dto.CompilationDtoIn;
 import ru.practicum.ewm.compilations.dto.CompilationDtoOut;
+import ru.practicum.ewm.events.dto.EventDtoOutShort;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -41,11 +42,14 @@ public class AdminCompilationControllerTest {
     @BeforeEach
     void setUp() {
         mvc = MockMvcBuilders.standaloneSetup(adminCompilationController).build();
-        Set<Long> events = new HashSet<>();
+        Set<Long> eventsId = new HashSet<>();
         events.add(1L);
         events.add(2L);
+        Set<EventDtoOutShort> events = new HashSet<>();
+        events.add(EventDtoOutShort.builder().id(1L).build());
+        events.add(EventDtoOutShort.builder().id(2L).build());
         compilationDtoIn = CompilationDtoIn.builder()
-                .events(events)
+                .events(eventsId)
                 .pinned(true)
                 .title("Testing")
                 .build();
@@ -79,7 +83,7 @@ public class AdminCompilationControllerTest {
     @Test
     void deleteCompilation() throws Exception {
         doNothing().when(adminService).deleteCompilation(anyLong());
-        mvc.perform(delete(url+ "/" + compilationDtoOut.getId())
+        mvc.perform(delete(url + "/" + compilationDtoOut.getId())
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))

@@ -38,29 +38,34 @@ public class RequestServiceImpl implements RequestService {
         User user = commonService.getUserInDb(userId);
         Event event = commonService.getEventInDb(eventId);
         val checkInDb = requestRepository.findAllByRequesterAndEventId(user, event);
-        if (checkInDb != null || !event.getInitiator().getId().equals(user.getId()) ||
-                !event.getState().equals(EventState.PUBLISHED)) {
-            throw new ValidationException("Only pending or canceled events can be changed");
+        if (!checkInDb.isEmpty()) {
+            throw new ValidationException("Such request is saved.");
+        }
+        if (event.getInitiator().getId().equals(user.getId())) {
+            throw new ValidationException("User can't be initiator of event.");
+        }
+        if (!event.getState().equals(EventState.PUBLISHED)) {
+            throw new ValidationException("Event must be published.");
         }
         if (event.getParticipantLimit() <= event.getRequests()
                 .stream().filter(i -> i.getStatus().equals(EventState.PUBLISHED))
                 .collect(Collectors.toList())
                 .size()) {
-            throw new ValidationException("Only pending or canceled events can be changed");
+            throw new ValidationException("Partition limit is reached.");
         }
         Request request = Request.builder()
                 .created(LocalDateTime.now())
                 .eventId(event)
                 .requester(user)
-                .status((event.getRequestModeration()) ? EventState.PUBLISHED : EventState.PENDING)
+                .status((event.getRequestModeration()) ? EventState.PENDING : EventState.CONFIRMED)
                 .build();
         try {
             return RequestMapper.INSTANCE.toRequestDtoFromRequest(requestRepository.save(request));
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Save request of user method", "request category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Save request of user method", "request category"));
         }
     }
 
@@ -69,7 +74,7 @@ public class RequestServiceImpl implements RequestService {
         User user = commonService.getUserInDb(userId);
         Request request = commonService.getRequestInDb(requestId);
         if (!user.getId().equals(request.getRequester().getId())) {
-            throw new NotFoundException("Only pending or canceled events can be changed");
+            throw new NotFoundException("Id of user and request requester is not equal.");
         }
         request.setStatus(EventState.CANCELED);
         try {
@@ -77,8 +82,8 @@ public class RequestServiceImpl implements RequestService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Cancel request of user method", "request category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Cancel request of user method", "request category"));
         }
     }
 }

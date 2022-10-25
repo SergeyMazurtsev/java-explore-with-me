@@ -3,6 +3,7 @@ package ru.practicum.ewm.compilations.dto;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.util.Set;
 
 @Getter
@@ -13,6 +14,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class CompilationDtoIn {
+    @NotNull
     private Set<Long> events;
     private Boolean pinned;
     @NotBlank

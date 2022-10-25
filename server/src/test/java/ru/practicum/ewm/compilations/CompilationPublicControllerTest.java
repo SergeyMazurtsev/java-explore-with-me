@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import ru.practicum.ewm.compilations.dto.CompilationDtoOut;
+import ru.practicum.ewm.events.dto.EventDtoOutShort;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -46,13 +47,13 @@ public class CompilationPublicControllerTest {
                 .id(1L)
                 .pinned(true)
                 .title("Testing title 1")
-                .events(new HashSet<>(Arrays.asList(2L)))
+                .events(new HashSet<>(Arrays.asList(EventDtoOutShort.builder().id(2L).build())))
                 .build();
         compilationDtoOut2 = CompilationDtoOut.builder()
                 .id(2L)
                 .pinned(false)
                 .title("Testing title 2")
-                .events(new HashSet<>(Arrays.asList(1L)))
+                .events(new HashSet<>(Arrays.asList(EventDtoOutShort.builder().id(1L).build())))
                 .build();
     }
 

@@ -52,16 +52,24 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Save user method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Save user method", "admin category"));
         }
     }
 
     @Override
     public Collection<UserDto> getUsers(List<Long> userIds, Integer from, Integer size) {
-        List<User> users = userIds.stream()
-                .map(commonService::getUserInDb)
-                .collect(Collectors.toList());
+        List<User> users = new ArrayList<>();
+        for (Long userId : userIds) {
+            Optional<User> check = userRepository.findById(userId);
+            if (!check.isPresent()) {
+                continue;
+            }
+            users.add(check.get());
+        }
+        if (users.isEmpty()) {
+            return Collections.emptyList();
+        }
         Page<User> userPage = new PageImpl<User>(
                 users, commonService.getPagination(from, size, null), users.size());
         return userPage.stream().map(UserMapper.INSTANCE::toUserDto)
@@ -75,8 +83,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (EmptyResultDataAccessException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Delete user method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Delete user method", "admin category"));
         }
     }
 
@@ -92,8 +100,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Save category method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Save category method", "admin category"));
         }
     }
 
@@ -107,8 +115,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Patch category method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Patch category method", "admin category"));
         }
     }
 
@@ -124,8 +132,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (EmptyResultDataAccessException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Delete category method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Delete category method", "admin category"));
         }
     }
 
@@ -186,8 +194,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Patch event method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Patch event method", "admin category"));
         }
     }
 
@@ -205,8 +213,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Patch event publish method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Patch event publish method", "admin category"));
         }
     }
 
@@ -223,8 +231,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Patch event reject method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Patch event reject method", "admin category"));
         }
     }
 
@@ -232,14 +240,17 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public CompilationDtoOut createCompilation(CompilationDtoIn compilationDtoIn) {
         Compilation compilation = CompilationMapper.INSTANCE.toCompilationFromCompilationDroIn(compilationDtoIn);
+        Set<Event> events = compilationDtoIn.getEvents().stream()
+                .map(commonService::getEventInDb).collect(Collectors.toSet());
+        compilation.setEvents(events);
         try {
             return CompilationMapper.INSTANCE
                     .toCompilationDtoOutFromCompilation(compilationRepository.save(compilation));
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Save compilation method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Save compilation method", "admin category"));
         }
     }
 
@@ -250,8 +261,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (EmptyResultDataAccessException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Delete compilation method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Delete compilation method", "admin category"));
         }
     }
 
@@ -272,8 +283,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Delete event from compilation method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Delete event from compilation method", "admin category"));
         }
     }
 
@@ -293,8 +304,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Add event to compilation method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Add event to compilation method", "admin category"));
         }
     }
 
@@ -307,8 +318,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Unpin compilation method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Unpin compilation method", "admin category"));
         }
     }
 
@@ -321,8 +332,8 @@ public class AdminServiceImpl implements AdminService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Pin compilation method", "admin category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Pin compilation method", "admin category"));
         }
     }
 }

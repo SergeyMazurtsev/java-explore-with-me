@@ -17,10 +17,14 @@ import ru.practicum.ewm.events.dto.EventDtoOutShort;
 import ru.practicum.ewm.events.mapper.EventMapper;
 import ru.practicum.ewm.events.model.Event;
 import ru.practicum.ewm.exceptions.NotFoundException;
+import ru.practicum.ewm.exceptions.ValidationException;
 import ru.practicum.ewm.requests.RequestRepository;
 import ru.practicum.ewm.requests.model.Request;
 import ru.practicum.ewm.statistics.StatisticClient;
 import ru.practicum.ewm.statistics.model.ViewStats;
+
+import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +48,7 @@ public class CommonService {
 
     public Pageable getPagination(Integer from, Integer size, String sortField) {
         if ((from < 0 || size < 0) || (size == 0)) {
-            throw new RuntimeException("Bad request with pagination parameters.");
+            throw new ValidationException("Bad request with pagination parameters.");
         }
         if (sortField != null) {
             return PageRequest.of(from / size, size, Sort.by(sortField).descending());
@@ -60,17 +64,25 @@ public class CommonService {
 
     public EventDtoOutFull addViewsToEventFull(Event event) {
         EventDtoOutFull eventDtoOutFull = EventMapper.INSTANCE.toEventDtoOutFullFromEvent(event);
-        eventDtoOutFull.setViews(statisticClient.getViewOfEvent(
-                        event.getCreatedOn(), event.getEventDate(), null, null)
-                .stream().map(ViewStats::getHits).mapToLong(Long::longValue).sum());
+        List<ViewStats> viewStats = statisticClient.getViewOfEvent(
+                event.getCreatedOn(), event.getEventDate(), null, null);
+        Long views = (viewStats != null) ? viewStats.stream()
+                .map(ViewStats::getHits)
+                .filter(Objects::nonNull)
+                .mapToLong(Long::longValue).sum() : 0L;
+        eventDtoOutFull.setViews(views);
         return eventDtoOutFull;
     }
 
     public EventDtoOutShort addViewsToEventShort(Event event) {
         EventDtoOutShort eventDtoOutShort = EventMapper.INSTANCE.toEventDtoOutShortFromEvent(event);
-        eventDtoOutShort.setViews(statisticClient.getViewOfEvent(
-                        event.getCreatedOn(), event.getEventDate(), null, null)
-                .stream().map(ViewStats::getHits).mapToLong(Long::longValue).sum());
+        List<ViewStats> viewStats = statisticClient.getViewOfEvent(
+                event.getCreatedOn(), event.getEventDate(), null, null);
+        Long views = (viewStats != null) ? viewStats.stream()
+                .map(ViewStats::getHits)
+                .filter(Objects::nonNull)
+                .mapToLong(Long::longValue).sum() : 0L;
+        eventDtoOutShort.setViews(views);
         return eventDtoOutShort;
     }
 

@@ -3,6 +3,7 @@ package ru.practicum.ewm.events;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import ru.practicum.ewm.admin.model.Category;
 import ru.practicum.ewm.admin.model.User;
 import ru.practicum.ewm.common.CommonService;
 import ru.practicum.ewm.events.dto.EventDtoIn;
@@ -49,9 +50,6 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException(String.format("Event with id=%s was not found.",
                     eventDtoInPatch.getEventId()));
         }
-        if (!event.getState().equals(EventState.CANCELED) || event.getRequestModeration().equals(false)) {
-            throw new ValidationException("Event must be canceled or not moderated.");
-        }
         if (event.getState().equals(EventState.CANCELED)) {
             event.setRequestModeration(true);
         }
@@ -64,8 +62,8 @@ public class EventServiceImpl implements EventService {
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Patch event method", "event category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Patch event method", "event category"));
         }
     }
 
@@ -73,17 +71,20 @@ public class EventServiceImpl implements EventService {
     public EventDtoOutFull createEvent(Long userId, EventDtoIn eventDtoIn) {
         User user = commonService.getUserInDb(userId);
         Event event = EventMapper.INSTANCE.toEventFromEventDtoIn(eventDtoIn);
+        Category category = commonService.getCategoryInDb(eventDtoIn.getCategory());
+        event.setCategoryId(category);
+        event.setInitiator(user);
+        event.setState(EventState.PENDING);
         if (LocalDateTime.now().plusHours(2).isAfter(event.getEventDate())) {
             throw new ValidationException("The posting event cannot be later than 2 hours before the event.");
         }
-        event.setInitiator(user);
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Save event method", "event category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Save event method", "event category"));
         }
     }
 
@@ -106,17 +107,14 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException(String.format("Event with id=%s was not found.",
                     eventId));
         }
-        if (event.getRequestModeration().equals(true)) {
-            throw new ValidationException("Event must be not moderated.");
-        }
         event.setState(EventState.CANCELED);
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Cancel event method", "event category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Cancel event method", "event category"));
         }
     }
 
@@ -125,7 +123,10 @@ public class EventServiceImpl implements EventService {
     public Collection<RequestDto> getRequestsInEventOfUser(Long userId, Long eventId) {
         Event event = commonService.getEventInDb(eventId);
         User user = commonService.getUserInDb(userId);
-        return requestRepository.findAllByRequesterAndEventId(user, event)
+        if (!event.getInitiator().equals(user)) {
+            throw new ValidationException("User must be event initiator.");
+        }
+        return requestRepository.findAllByEventId(event)
                 .stream()
                 .map(RequestMapper.INSTANCE::toRequestDtoFromRequest)
                 .collect(Collectors.toList());
@@ -137,17 +138,17 @@ public class EventServiceImpl implements EventService {
         commonService.getUserInDb(userId);
         Request request = commonService.getRequestInDb(reqId);
         if (event.getParticipantLimit() <= event.getRequests()
-                .stream().filter(i -> i.getStatus().equals(EventState.PUBLISHED))
+                .stream().filter(i -> i.getStatus().equals(EventState.CONFIRMED))
                 .collect(Collectors.toList())
                 .size()) {
             throw new ValidationException("Limit of requests is rich.");
         }
         if (event.getParticipantLimit() == null || event.getParticipantLimit() == 0
                 || event.getRequestModeration().equals(false)) {
-            request.setStatus(EventState.PUBLISHED);
+            request.setStatus(EventState.CONFIRMED);
         }
         if (event.getParticipantLimit() == event.getRequests()
-                .stream().filter(i -> i.getStatus().equals(EventState.PUBLISHED))
+                .stream().filter(i -> i.getStatus().equals(EventState.CONFIRMED))
                 .collect(Collectors.toList())
                 .size() + 1) {
             Collection<Request> requests = requestRepository.findAllByEventId(event)
@@ -158,14 +159,14 @@ public class EventServiceImpl implements EventService {
                 requests.stream().peek(requestRepository::save);
             }
         }
-        request.setStatus(EventState.PUBLISHED);
+        request.setStatus(EventState.CONFIRMED);
         try {
             return RequestMapper.INSTANCE.toRequestDtoFromRequest(requestRepository.save(request));
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Confirm event request method", "event category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Confirm event request method", "event category"));
         }
     }
 
@@ -174,14 +175,14 @@ public class EventServiceImpl implements EventService {
         commonService.getEventInDb(eventId);
         commonService.getUserInDb(userId);
         Request request = commonService.getRequestInDb(reqId);
-        request.setStatus(EventState.CANCELED);
+        request.setStatus(EventState.REJECTED);
         try {
             return RequestMapper.INSTANCE.toRequestDtoFromRequest(requestRepository.save(request));
         } catch (DataIntegrityViolationException e) {
             throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
                             "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement"
-                    , "Confirm event request method", "event category"));
+                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+                    "Confirm event request method", "event category"));
         }
     }
 

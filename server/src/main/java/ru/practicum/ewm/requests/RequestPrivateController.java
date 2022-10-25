@@ -25,9 +25,9 @@ public class RequestPrivateController {
     public ResponseEntity<Object> createRequestForUser(
             @PathVariable(name = "userId") Long userId,
             @RequestParam(name = "eventId") Long eventId) {
-        log.info("Create request = {}", eventId);
+        log.info("Create request to event = {}", eventId);
         log.info("from user id = {}", userId);
-        return new ResponseEntity<>(requestService.createRequestForUser(userId, eventId), HttpStatus.CREATED);
+        return new ResponseEntity<>(requestService.createRequestForUser(userId, eventId), HttpStatus.OK);
     }
 
     @PatchMapping("/{userId}/requests/{requestId}/cancel")

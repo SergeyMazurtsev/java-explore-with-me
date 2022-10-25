@@ -25,7 +25,6 @@ public interface EventMapper {
         Event.EventBuilder event = Event.builder();
         event.id(eventDtoIn.getId());
         event.annotation(eventDtoIn.getAnnotation());
-        event.categoryId(Category.builder().id(eventDtoIn.getCategory()).build());
         event.createdOn(LocalDateTime.now());
         event.description(eventDtoIn.getDescription());
         event.eventDate(eventDtoIn.getEventDate());
@@ -47,7 +46,11 @@ public interface EventMapper {
         eventDtoOutShort.id(event.getId());
         eventDtoOutShort.annotation(event.getAnnotation());
         eventDtoOutShort.category(CategoryMapper.INSTANCE.toCategoryDto(event.getCategoryId()));
-        eventDtoOutShort.confirmedRequests((event.getRequests() != null) ? (long) event.getRequests().size() : 0);
+        eventDtoOutShort.confirmedRequests(
+                (event.getRequests() != null) ?
+                        event.getRequests().stream()
+                                .filter(i -> i.getStatus().equals(EventState.CONFIRMED))
+                                .count() : 0);
         eventDtoOutShort.eventDate(event.getEventDate());
         eventDtoOutShort.initiator(UserMapper.INSTANCE.toUserDto(event.getInitiator()));
         eventDtoOutShort.paid(event.getPaid());
@@ -67,7 +70,11 @@ public interface EventMapper {
         eventDtoOutFull.id(event.getId());
         eventDtoOutFull.annotation(event.getAnnotation());
         eventDtoOutFull.category(CategoryMapper.INSTANCE.toCategoryDto(event.getCategoryId()));
-        eventDtoOutFull.confirmedRequests((event.getRequests() != null) ? (long) event.getRequests().size() : 0);
+        eventDtoOutFull.confirmedRequests(
+                (event.getRequests() != null) ?
+                        event.getRequests().stream()
+                                .filter(i -> i.getStatus().equals(EventState.CONFIRMED))
+                                .count() : 0);
         eventDtoOutFull.createdOn(event.getCreatedOn());
         eventDtoOutFull.description(event.getDescription());
         eventDtoOutFull.eventDate(event.getEventDate());

@@ -23,6 +23,7 @@ import ru.practicum.ewm.events.EventRepository;
 import ru.practicum.ewm.events.EventState;
 import ru.practicum.ewm.events.dto.EventDtoIn;
 import ru.practicum.ewm.events.dto.EventDtoOutFull;
+import ru.practicum.ewm.events.dto.EventDtoOutShort;
 import ru.practicum.ewm.events.dto.Location;
 import ru.practicum.ewm.events.model.Event;
 import ru.practicum.ewm.requests.model.Request;
@@ -58,6 +59,8 @@ public class AdminServiceImplTest {
     private EventDtoIn eventDtoIn;
     private EventDtoOutFull eventDtoOutFull1;
     private EventDtoOutFull eventDtoOutFull2;
+    private EventDtoOutShort eventDtoOutShort1;
+    private EventDtoOutShort eventDtoOutShort2;
     private Compilation compilation;
     private CompilationDtoIn compilationDtoIn;
     private CompilationDtoOut compilationDtoOut;
@@ -109,7 +112,7 @@ public class AdminServiceImplTest {
                 .requestModeration(true)
                 .state(EventState.PENDING)
                 .title("Testing title.")
-                .requests(new HashSet<>(Arrays.asList(Request.builder().id(1L).build())))
+                .requests(new HashSet<>(Arrays.asList(Request.builder().id(1L).status(EventState.PUBLISHED).build())))
                 .build();
         event2 = Event.builder()
                 .id(2L)
@@ -127,7 +130,7 @@ public class AdminServiceImplTest {
                 .requestModeration(true)
                 .state(EventState.PENDING)
                 .title("Testing title.")
-                .requests(new HashSet<>(Arrays.asList(Request.builder().id(1L).build())))
+                .requests(new HashSet<>(Arrays.asList(Request.builder().id(1L).status(EventState.PUBLISHED).build())))
                 .build();
         eventDtoOutFull1 = EventDtoOutFull.builder()
                 .id(event1.getId())
@@ -175,6 +178,26 @@ public class AdminServiceImplTest {
                 .requestModeration(event1.getRequestModeration())
                 .title(event1.getTitle())
                 .build();
+        eventDtoOutShort1 = EventDtoOutShort.builder()
+                .id(event1.getId())
+                .annotation(event1.getAnnotation())
+                .category(categoryDto)
+                .confirmedRequests(0L)
+                .eventDate(event1.getEventDate())
+                .initiator(userDto1)
+                .paid(event1.getPaid())
+                .title(event1.getTitle())
+                .build();
+        eventDtoOutShort2 = EventDtoOutShort.builder()
+                .id(event2.getId())
+                .annotation(event2.getAnnotation())
+                .category(categoryDto)
+                .confirmedRequests(0L)
+                .eventDate(event2.getEventDate())
+                .initiator(userDto1)
+                .paid(event2.getPaid())
+                .title(event2.getTitle())
+                .build();
         compilation = Compilation.builder()
                 .id(1L)
                 .pinned(true)
@@ -190,7 +213,7 @@ public class AdminServiceImplTest {
                 .id(compilation.getId())
                 .pinned(compilation.getPinned())
                 .title(compilation.getTitle())
-                .events(Set.of(event1.getId(), event2.getId()))
+                .events(Set.of(eventDtoOutShort1, eventDtoOutShort2))
                 .build();
     }
 
@@ -215,9 +238,9 @@ public class AdminServiceImplTest {
         users.add(user2);
         when(commonService.getPagination(anyInt(), anyInt(), any()))
                 .thenReturn(pageable);
-        when(commonService.getUserInDb(anyLong()))
-                .thenReturn(user1)
-                .thenReturn(user2);
+        when(userRepository.findById(anyLong()))
+                .thenReturn(Optional.ofNullable(user1))
+                .thenReturn(Optional.ofNullable(user2));
 
         List<UserDto> userDtos = new ArrayList<>();
         userDtos.add(userDto1);
@@ -229,8 +252,8 @@ public class AdminServiceImplTest {
         assertThat(testUsers.get(1), equalTo(userDtos.get(1)));
         verify(commonService, times(1))
                 .getPagination(anyInt(), anyInt(), any());
-        verify(commonService, times(2))
-                .getUserInDb(anyLong());
+        verify(userRepository, times(2))
+                .findById(anyLong());
     }
 
     @Test
@@ -375,11 +398,16 @@ public class AdminServiceImplTest {
     void createCompilation() {
         when(compilationRepository.save(any(Compilation.class)))
                 .thenReturn(compilation);
+        when(commonService.getEventInDb(anyLong()))
+                .thenReturn(event1)
+                .thenReturn(event2);
         CompilationDtoOut testCompilation = adminService.createCompilation(compilationDtoIn);
         assertThat(testCompilation, equalTo(compilationDtoOut));
 
         verify(compilationRepository, times(1))
                 .save(any(Compilation.class));
+        verify(commonService, times(2))
+                .getEventInDb(anyLong());
     }
 
     @Test

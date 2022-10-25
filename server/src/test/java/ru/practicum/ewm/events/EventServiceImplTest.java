@@ -313,7 +313,7 @@ public class EventServiceImplTest {
 
     @Test
     void cancelEventOfUser() {
-        event1.setRequestModeration(false);
+        event1.setRequestModeration(true);
         when(commonService.getUserInDb(anyLong()))
                 .thenReturn(user1);
         when(commonService.getEventInDb(anyLong()))
@@ -342,7 +342,7 @@ public class EventServiceImplTest {
                 .thenReturn(user1);
         when(commonService.getEventInDb(anyLong()))
                 .thenReturn(event1);
-        when(requestRepository.findAllByRequesterAndEventId(any(User.class), any(Event.class)))
+        when(requestRepository.findAllByEventId(any(Event.class)))
                 .thenReturn(requests);
         List<RequestDto> testRequest = eventService.getRequestsInEventOfUser(user1.getId(), event1.getId())
                 .stream().collect(Collectors.toList());
@@ -353,13 +353,13 @@ public class EventServiceImplTest {
         verify(commonService, times(1))
                 .getEventInDb(anyLong());
         verify(requestRepository, times(1))
-                .findAllByRequesterAndEventId(any(User.class), any(Event.class));
+                .findAllByEventId(any(Event.class));
     }
 
     @Test
     void patchRequestInEventOfUserConfirm() {
         request.setStatus(EventState.PENDING);
-        requestDto.setStatus(EventState.PUBLISHED);
+        requestDto.setStatus(EventState.CONFIRMED);
         when(commonService.getUserInDb(anyLong()))
                 .thenReturn(user1);
         when(commonService.getEventInDb(anyLong()))
@@ -383,7 +383,7 @@ public class EventServiceImplTest {
     @Test
     void patchRequestInEventOfUserReject() {
         request.setStatus(EventState.PENDING);
-        requestDto.setStatus(EventState.CANCELED);
+        requestDto.setStatus(EventState.REJECTED);
         when(commonService.getUserInDb(anyLong()))
                 .thenReturn(user1);
         when(commonService.getEventInDb(anyLong()))

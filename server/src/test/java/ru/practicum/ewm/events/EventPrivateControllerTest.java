@@ -155,7 +155,7 @@ public class EventPrivateControllerTest {
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(eventDtoOutFull.getId()), Long.class));
         verify(eventService, times(1))
                 .createEvent(anyLong(), any(EventDtoIn.class));

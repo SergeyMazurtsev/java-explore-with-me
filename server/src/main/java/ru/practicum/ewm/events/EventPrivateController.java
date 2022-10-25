@@ -43,7 +43,7 @@ public class EventPrivateController {
             @PathVariable(name = "userId") Long userId,
             @Valid @RequestBody EventDtoIn eventDtoIn) {
         log.info("Create private event of user = {}, {}", userId, eventDtoIn);
-        return new ResponseEntity<>(eventService.createEvent(userId, eventDtoIn), HttpStatus.CREATED);
+        return new ResponseEntity<>(eventService.createEvent(userId, eventDtoIn), HttpStatus.OK);
     }
 
     @GetMapping("/{userId}/events/{eventId}")

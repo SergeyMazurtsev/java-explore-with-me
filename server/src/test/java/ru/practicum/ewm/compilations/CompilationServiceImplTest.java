@@ -11,9 +11,13 @@ import org.springframework.data.domain.Pageable;
 import ru.practicum.ewm.common.CommonService;
 import ru.practicum.ewm.compilations.dto.CompilationDtoOut;
 import ru.practicum.ewm.compilations.model.Compilation;
+import ru.practicum.ewm.events.dto.EventDtoOutShort;
 import ru.practicum.ewm.events.model.Event;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -45,7 +49,7 @@ public class CompilationServiceImplTest {
                 .id(compilation.getId())
                 .pinned(compilation.getPinned())
                 .title(compilation.getTitle())
-                .events(new HashSet<>(Arrays.asList(eventId)))
+                .events(new HashSet<>(Arrays.asList(EventDtoOutShort.builder().id(eventId).confirmedRequests(0L).build())))
                 .build();
     }
 

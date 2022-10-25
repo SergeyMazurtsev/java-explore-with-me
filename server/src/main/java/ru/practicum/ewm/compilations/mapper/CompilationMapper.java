@@ -6,7 +6,7 @@ import org.mapstruct.factory.Mappers;
 import ru.practicum.ewm.compilations.dto.CompilationDtoIn;
 import ru.practicum.ewm.compilations.dto.CompilationDtoOut;
 import ru.practicum.ewm.compilations.model.Compilation;
-import ru.practicum.ewm.events.model.Event;
+import ru.practicum.ewm.events.mapper.EventMapper;
 
 import java.util.stream.Collectors;
 
@@ -20,9 +20,6 @@ public interface CompilationMapper {
             return null;
         }
         Compilation.CompilationBuilder compilation = Compilation.builder();
-        compilation.events(compilationDtoIn.getEvents().stream()
-                .map(i -> Event.builder().id(i).build())
-                .collect(Collectors.toSet()));
         compilation.pinned(compilationDtoIn.getPinned());
         compilation.title(compilationDtoIn.getTitle());
         return compilation.build();
@@ -34,7 +31,7 @@ public interface CompilationMapper {
         }
         CompilationDtoOut.CompilationDtoOutBuilder compilationDtoOut = CompilationDtoOut.builder();
         compilationDtoOut.events(compilation.getEvents().stream()
-                .map(Event::getId)
+                .map(EventMapper.INSTANCE::toEventDtoOutShortFromEvent)
                 .collect(Collectors.toSet()));
         compilationDtoOut.id(compilation.getId());
         compilationDtoOut.pinned(compilation.getPinned());
