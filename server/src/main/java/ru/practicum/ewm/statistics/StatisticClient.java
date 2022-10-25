@@ -1,6 +1,7 @@
 package ru.practicum.ewm.statistics;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +17,12 @@ public interface StatisticClient {
     @GetMapping(path = "/stats")
     @ResponseStatus(HttpStatus.OK)
     List<ViewStats> getViewOfEvent(
-            @RequestParam LocalDateTime start,
-            @RequestParam LocalDateTime end,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE, pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime start,
+            @RequestParam
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE, pattern = "yyyy-MM-dd HH:mm:ss")
+            LocalDateTime end,
             @RequestParam(required = false) List<String> uris,
             @RequestParam(required = false) Boolean unique);
 
