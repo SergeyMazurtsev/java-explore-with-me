@@ -7,11 +7,15 @@ import org.mapstruct.factory.Mappers;
 import ru.practicum.ewm.admin.mapper.CategoryMapper;
 import ru.practicum.ewm.admin.mapper.UserMapper;
 import ru.practicum.ewm.admin.model.Category;
+import ru.practicum.ewm.comments.CommentMapper;
+import ru.practicum.ewm.comments.model.Comment;
 import ru.practicum.ewm.events.EventState;
 import ru.practicum.ewm.events.dto.*;
 import ru.practicum.ewm.events.model.Event;
 
 import java.time.LocalDateTime;
+import java.util.OptionalDouble;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -42,6 +46,11 @@ public interface EventMapper {
         if (event == null) {
             return null;
         }
+        OptionalDouble averageRating = (event.getComments() != null) ?
+                event.getComments().stream()
+                        .map(Comment::getRating)
+                        .mapToDouble(a -> a)
+                        .average() : OptionalDouble.empty();
         return EventDtoOutShort.builder()
                 .id(event.getId())
                 .annotation(event.getAnnotation())
@@ -55,6 +64,12 @@ public interface EventMapper {
                 .initiator(UserMapper.INSTANCE.toUserDto(event.getInitiator()))
                 .paid(event.getPaid())
                 .title(event.getTitle())
+                .averageRating((averageRating.isPresent()) ? averageRating.getAsDouble() : null)
+                .comments(
+                        (event.getComments() != null) ?
+                                event.getComments().stream()
+                                        .map(CommentMapper.INSTANCE::toCommentDtoOutFromComment)
+                                        .collect(Collectors.toSet()) : null)
                 .build();
     }
 
@@ -62,6 +77,11 @@ public interface EventMapper {
         if (event == null) {
             return null;
         }
+        OptionalDouble averageRating = (event.getComments() != null) ?
+                event.getComments().stream()
+                        .map(Comment::getRating)
+                        .mapToDouble(a -> a)
+                        .average() : OptionalDouble.empty();
         return EventDtoOutFull.builder()
                 .id(event.getId())
                 .location(Location.builder()
@@ -85,6 +105,12 @@ public interface EventMapper {
                 .requestModeration(event.getRequestModeration())
                 .state(event.getState())
                 .title(event.getTitle())
+                .averageRating((averageRating.isPresent()) ? averageRating.getAsDouble() : null)
+                .comments(
+                        (event.getComments() != null) ?
+                                event.getComments().stream()
+                                        .map(CommentMapper.INSTANCE::toCommentDtoOutFromComment)
+                                        .collect(Collectors.toSet()) : null)
                 .build();
     }
 

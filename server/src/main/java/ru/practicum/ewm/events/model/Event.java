@@ -4,6 +4,7 @@ import lombok.*;
 import org.hibernate.Hibernate;
 import ru.practicum.ewm.admin.model.Category;
 import ru.practicum.ewm.admin.model.User;
+import ru.practicum.ewm.comments.model.Comment;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.events.EventState;
 import ru.practicum.ewm.requests.model.Request;
@@ -61,6 +62,8 @@ public class Event {
     private Set<Request> requests = new HashSet<>();
     @ManyToMany(mappedBy = "events")
     private Set<Compilation> compilations;
+    @OneToMany(mappedBy = "event")
+    private Set<Comment> comments = new HashSet<>();
 
     @Override
     public boolean equals(Object o) {

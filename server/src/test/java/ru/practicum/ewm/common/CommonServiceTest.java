@@ -14,6 +14,8 @@ import ru.practicum.ewm.admin.dto.UserDto;
 import ru.practicum.ewm.admin.model.Category;
 import ru.practicum.ewm.admin.model.User;
 import ru.practicum.ewm.categories.CategoryRepository;
+import ru.practicum.ewm.comments.CommentRepository;
+import ru.practicum.ewm.comments.model.Comment;
 import ru.practicum.ewm.compilations.CompilationRepository;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.events.EventRepository;
@@ -42,9 +44,10 @@ public class CommonServiceTest {
     private final EventRepository eventRepository = Mockito.mock(EventRepository.class);
     private final RequestRepository requestRepository = Mockito.mock(RequestRepository.class);
     private final CompilationRepository compilationRepository = Mockito.mock(CompilationRepository.class);
+    private final CommentRepository commentRepository = Mockito.mock(CommentRepository.class);
     private final StatisticClient statisticClient = Mockito.mock(StatisticClient.class);
     private final CommonService commonService = new CommonService(
-            userRepository, categoryRepository, eventRepository, requestRepository, compilationRepository, statisticClient);
+            userRepository, categoryRepository, eventRepository, requestRepository, compilationRepository, commentRepository, statisticClient);
 
     private Long catId;
     private Long userId;
@@ -63,6 +66,7 @@ public class CommonServiceTest {
     private EventDtoOutShort eventDtoOutShort;
     private Compilation compilation;
     private Request request;
+    private Comment comment;
 
     @BeforeEach
     void setUp() {
@@ -158,6 +162,13 @@ public class CommonServiceTest {
                 .paid(event.getPaid())
                 .title(event.getTitle())
                 .views(3L)
+                .build();
+        comment = Comment.builder()
+                .id(1L)
+                .commentor(user)
+                .rating(10)
+                .comment("Testing comment")
+                .created(LocalDateTime.now())
                 .build();
     }
 
@@ -273,6 +284,17 @@ public class CommonServiceTest {
         assertThat(testComp, equalTo(compilation));
 
         verify(compilationRepository, times(1))
+                .findById(anyLong());
+    }
+
+    @Test
+    void getCommentInDb() {
+        when(commentRepository.findById(anyLong()))
+                .thenReturn(Optional.ofNullable(comment));
+        Comment testComment = commonService.getCommentInDb(comment.getId());
+        assertThat(testComment, equalTo(comment));
+
+        verify(commentRepository, times(1))
                 .findById(anyLong());
     }
 }

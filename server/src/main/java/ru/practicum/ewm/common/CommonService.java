@@ -9,6 +9,8 @@ import ru.practicum.ewm.admin.UserRepository;
 import ru.practicum.ewm.admin.model.Category;
 import ru.practicum.ewm.admin.model.User;
 import ru.practicum.ewm.categories.CategoryRepository;
+import ru.practicum.ewm.comments.CommentRepository;
+import ru.practicum.ewm.comments.model.Comment;
 import ru.practicum.ewm.compilations.CompilationRepository;
 import ru.practicum.ewm.compilations.model.Compilation;
 import ru.practicum.ewm.events.EventRepository;
@@ -36,6 +38,7 @@ public class CommonService {
     private final EventRepository eventRepository;
     private final RequestRepository requestRepository;
     private final CompilationRepository compilationRepository;
+    private final CommentRepository commentRepository;
     private final StatisticClient statisticClient;
 
     public User getUserInDb(Long userId) {
@@ -124,5 +127,10 @@ public class CommonService {
         } else {
             return events;
         }
+    }
+
+    public Comment getCommentInDb(Long commId) {
+        return commentRepository.findById(commId).orElseThrow(() -> new NotFoundException(
+                String.format("Comment with id=$s was not found.", commId)));
     }
 }
