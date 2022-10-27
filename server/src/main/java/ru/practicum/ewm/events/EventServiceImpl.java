@@ -1,7 +1,10 @@
 package ru.practicum.ewm.events;
 
 import lombok.RequiredArgsConstructor;
+import lombok.val;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.admin.model.Category;
 import ru.practicum.ewm.admin.model.User;
@@ -21,6 +24,7 @@ import ru.practicum.ewm.requests.mapper.RequestMapper;
 import ru.practicum.ewm.requests.model.Request;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -60,9 +64,7 @@ public class EventServiceImpl implements EventService {
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Patch event method", "event category"));
         }
     }
@@ -81,9 +83,7 @@ public class EventServiceImpl implements EventService {
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Save event method", "event category"));
         }
     }
@@ -111,9 +111,7 @@ public class EventServiceImpl implements EventService {
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Cancel event method", "event category"));
         }
     }
@@ -163,9 +161,7 @@ public class EventServiceImpl implements EventService {
         try {
             return RequestMapper.INSTANCE.toRequestDtoFromRequest(requestRepository.save(request));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Confirm event request method", "event category"));
         }
     }
@@ -179,57 +175,51 @@ public class EventServiceImpl implements EventService {
         try {
             return RequestMapper.INSTANCE.toRequestDtoFromRequest(requestRepository.save(request));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Confirm event request method", "event category"));
         }
     }
 
 
     @Override
-    public Collection<EventDtoOutShort> getPublicEvents(String text, List<Long> categories,
-                                                        Boolean paid, LocalDateTime rangeStart,
-                                                        LocalDateTime rangeEnd, Boolean onlyAvailable,
-                                                        EventPublicSort sort, Integer from, Integer size) {
-        Collection<Event> events;
+    public Collection<EventDtoOutShort> getPublicEvents(@Nullable String text, @Nullable List<Long> categories,
+                                                        @Nullable Boolean paid, @Nullable LocalDateTime rangeStart,
+                                                        @Nullable LocalDateTime rangeEnd, @Nullable Boolean onlyAvailable,
+                                                        @Nullable EventPublicSort sort, Integer from, Integer size) {
+        List<Event> events = new ArrayList<>();
         if (text != null) {
-            events = eventRepository
-                    .findAllByStateAndAnnotationContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrTitleContainingIgnoreCase(
-                            EventState.PUBLISHED, text, text, text, commonService.getPagination(from, size, null));
-        } else {
-            events = eventRepository.findAllByState(EventState.PUBLISHED, commonService.getPagination(from, size, null))
-                    .stream().collect(Collectors.toList());
-        }
-        if (categories != null) {
-            events = events.stream().filter(element -> {
-                for (Long i : categories) {
-                    if (element.getCategoryId().getId().equals(i)) {
-                        return true;
-                    }
+            if (paid != null) {
+                val elements = eventRepository.findAllByStateAndAnnotationContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrTitleContainingIgnoreCaseAndAndPaid(
+                        EventState.PUBLISHED, text, text, text, paid);
+                if (!elements.isEmpty()) {
+                    events.addAll(elements);
                 }
-                return false;
-            }).collect(Collectors.toList());
+            } else {
+                val elements = eventRepository.findAllByStateAndAnnotationContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrTitleContainingIgnoreCase(
+                        EventState.PUBLISHED, text, text, text);
+                if (!elements.isEmpty()) {
+                    events.addAll(elements);
+                }
+            }
+        } else if (paid != null) {
+            val elements = eventRepository.findAllByPaidAndState(paid, EventState.PUBLISHED);
+            if (!elements.isEmpty()) {
+                events.addAll(elements);
+            }
+        } else {
+            events = eventRepository.findAllByState(EventState.PUBLISHED);
         }
-        if (paid != null) {
-            events = events.stream().filter(element -> element.getPaid().equals(paid))
-                    .collect(Collectors.toList());
-        }
-        if (rangeStart != null) {
-            events = events.stream().filter(element -> element.getEventDate().isAfter(rangeStart))
-                    .collect(Collectors.toList());
-        }
-        if (rangeEnd != null) {
-            events = events.stream().filter(element -> element.getEventDate().isBefore(rangeEnd))
-                    .collect(Collectors.toList());
-        }
+        events = commonService.filterEventsByCategory(events, categories);
+        events = commonService.filterEventsByRangeStart(events, rangeStart);
+        events = commonService.filterEventsByRangeEnd(events, rangeEnd);
         if (onlyAvailable != null) {
             events = events.stream().filter(element -> element.getRequests().size() < element.getParticipantLimit())
                     .collect(Collectors.toList());
         }
-        Collection<EventDtoOutShort> result = events.stream()
+        List<EventDtoOutShort> result = new PageImpl<>(events.stream()
                 .map(commonService::addViewsToEventShort)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()), commonService.getPagination(from, size, null), events.size())
+                .stream().collect(Collectors.toList());
         if (sort != null) {
             switch (sort) {
                 case EVENT_DATE:

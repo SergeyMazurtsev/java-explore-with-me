@@ -52,16 +52,7 @@ public class EventPublicController {
         log.info("from={}, size={}", from, size);
         Collection<EventDtoOutShort> result = eventService.getPublicEvents(text, categories, paid, rangeStart,
                 rangeEnd, onlyAvailable, sort, from, size);
-        log.info("Sending info to statistic");
-        log.info("app = {}", app);
-        log.info("endpoint path = {}", request.getRequestURI());
-        log.info("client ip = {}", request.getRemoteAddr());
-        statisticClient.postViewOfEvent(EndpointHit.builder()
-                .app(app)
-                .uri(request.getRequestURI())
-                .ip(request.getRemoteAddr())
-                .timestamp(LocalDateTime.now())
-                .build());
+        sendStatistic(request);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
@@ -70,6 +61,11 @@ public class EventPublicController {
                                                  HttpServletRequest request) {
         log.info("Get public event id = {}", eventId);
         EventDtoOutFull result = eventService.getPublicEvent(eventId);
+        sendStatistic(request);
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
+
+    private void sendStatistic(HttpServletRequest request) {
         log.info("Sending info to statistic");
         log.info("app = {}", app);
         log.info("endpoint path = {}", request.getRequestURI());
@@ -80,6 +76,5 @@ public class EventPublicController {
                 .ip(request.getRemoteAddr())
                 .timestamp(LocalDateTime.now())
                 .build());
-        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }

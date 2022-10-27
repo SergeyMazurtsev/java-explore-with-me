@@ -23,8 +23,10 @@ import ru.practicum.ewm.requests.model.Request;
 import ru.practicum.ewm.statistics.StatisticClient;
 import ru.practicum.ewm.statistics.model.ViewStats;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,26 +66,24 @@ public class CommonService {
 
     public EventDtoOutFull addViewsToEventFull(Event event) {
         EventDtoOutFull eventDtoOutFull = EventMapper.INSTANCE.toEventDtoOutFullFromEvent(event);
-        List<ViewStats> viewStats = statisticClient.getViewOfEvent(
-                event.getCreatedOn(), event.getEventDate(), null, null);
-        Long views = (viewStats != null) ? viewStats.stream()
-                .map(ViewStats::getHits)
-                .filter(Objects::nonNull)
-                .mapToLong(Long::longValue).sum() : 0L;
-        eventDtoOutFull.setViews(views);
+        eventDtoOutFull.setViews(getViews(event));
         return eventDtoOutFull;
     }
 
     public EventDtoOutShort addViewsToEventShort(Event event) {
         EventDtoOutShort eventDtoOutShort = EventMapper.INSTANCE.toEventDtoOutShortFromEvent(event);
+        eventDtoOutShort.setViews(getViews(event));
+        return eventDtoOutShort;
+    }
+
+    private Long getViews(Event event) {
         List<ViewStats> viewStats = statisticClient.getViewOfEvent(
                 event.getCreatedOn(), event.getEventDate(), null, null);
         Long views = (viewStats != null) ? viewStats.stream()
                 .map(ViewStats::getHits)
                 .filter(Objects::nonNull)
                 .mapToLong(Long::longValue).sum() : 0L;
-        eventDtoOutShort.setViews(views);
-        return eventDtoOutShort;
+        return views;
     }
 
     public Request getRequestInDb(Long reqId) {
@@ -94,5 +94,35 @@ public class CommonService {
     public Compilation getCompilationInDb(Long compId) {
         return compilationRepository.findById(compId).orElseThrow(() -> new NotFoundException(
                 String.format("Event with id=%s was not found.", compId)));
+    }
+
+    public List<Event> filterEventsByCategory(List<Event> events, List<Long> categories) {
+        if (categories != null) {
+            return events.stream()
+                    .filter(e -> categories.stream().anyMatch(i -> i.equals(e.getCategoryId().getId())))
+                    .collect(Collectors.toList());
+        } else {
+            return events;
+        }
+    }
+
+    public List<Event> filterEventsByRangeStart(List<Event> events, LocalDateTime rangeStart) {
+        if (rangeStart != null) {
+            return events.stream()
+                    .filter(event -> event.getEventDate().isAfter(rangeStart))
+                    .collect(Collectors.toList());
+        } else {
+            return events;
+        }
+    }
+
+    public List<Event> filterEventsByRangeEnd(List<Event> events, LocalDateTime rangeEnd) {
+        if (rangeEnd != null) {
+            return events.stream()
+                    .filter(event -> event.getEventDate().isBefore(rangeEnd))
+                    .collect(Collectors.toList());
+        } else {
+            return events;
+        }
     }
 }

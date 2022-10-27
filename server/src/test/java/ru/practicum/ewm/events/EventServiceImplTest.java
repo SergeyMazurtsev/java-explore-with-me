@@ -1,5 +1,6 @@
 package ru.practicum.ewm.events;
 
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -413,7 +414,13 @@ public class EventServiceImplTest {
         events.add(event2);
         when(commonService.getPagination(anyInt(), anyInt(), any()))
                 .thenReturn(pageable);
-        when(eventRepository.findAllByState(any(EventState.class), any(Pageable.class)))
+        when(eventRepository.findAllByState(any(EventState.class)))
+                .thenReturn(events);
+        when(commonService.filterEventsByCategory(anyList(), any()))
+                .thenReturn(events);
+        when(commonService.filterEventsByRangeStart(anyList(), any()))
+                .thenReturn(events);
+        when(commonService.filterEventsByRangeEnd(anyList(), any()))
                 .thenReturn(events);
         when(commonService.addViewsToEventShort(any(Event.class)))
                 .thenReturn(eventDtoOutShort1)
@@ -428,7 +435,13 @@ public class EventServiceImplTest {
         verify(commonService, times(1))
                 .getPagination(anyInt(), anyInt(), any());
         verify(eventRepository, times(1))
-                .findAllByState(any(EventState.class), any(Pageable.class));
+                .findAllByState(any(EventState.class));
+        verify(commonService, times(1))
+                .filterEventsByCategory(anyList(), any());
+        verify(commonService, times(1))
+                .filterEventsByRangeStart(anyList(), any());
+        verify(commonService, times(1))
+                .filterEventsByRangeEnd(anyList(), any());
         verify(commonService, times(2))
                 .addViewsToEventShort(any(Event.class));
     }

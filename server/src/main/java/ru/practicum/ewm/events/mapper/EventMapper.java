@@ -42,76 +42,76 @@ public interface EventMapper {
         if (event == null) {
             return null;
         }
-        EventDtoOutShort.EventDtoOutShortBuilder eventDtoOutShort = EventDtoOutShort.builder();
-        eventDtoOutShort.id(event.getId());
-        eventDtoOutShort.annotation(event.getAnnotation());
-        eventDtoOutShort.category(CategoryMapper.INSTANCE.toCategoryDto(event.getCategoryId()));
-        eventDtoOutShort.confirmedRequests(
-                (event.getRequests() != null) ?
-                        event.getRequests().stream()
-                                .filter(i -> i.getStatus().equals(EventState.CONFIRMED))
-                                .count() : 0);
-        eventDtoOutShort.eventDate(event.getEventDate());
-        eventDtoOutShort.initiator(UserMapper.INSTANCE.toUserDto(event.getInitiator()));
-        eventDtoOutShort.paid(event.getPaid());
-        eventDtoOutShort.title(event.getTitle());
-        return eventDtoOutShort.build();
+        return EventDtoOutShort.builder()
+                .id(event.getId())
+                .annotation(event.getAnnotation())
+                .category(CategoryMapper.INSTANCE.toCategoryDto(event.getCategoryId()))
+                .confirmedRequests(
+                        (event.getRequests() != null) ?
+                                event.getRequests().stream()
+                                        .filter(i -> i.getStatus().equals(EventState.CONFIRMED))
+                                        .count() : 0)
+                .eventDate(event.getEventDate())
+                .initiator(UserMapper.INSTANCE.toUserDto(event.getInitiator()))
+                .paid(event.getPaid())
+                .title(event.getTitle())
+                .build();
     }
 
     default EventDtoOutFull toEventDtoOutFullFromEvent(Event event) {
         if (event == null) {
             return null;
         }
-        EventDtoOutFull.EventDtoOutFullBuilder eventDtoOutFull = EventDtoOutFull.builder();
-        eventDtoOutFull.location(Location.builder()
-                .lat(event.getLocationLat())
-                .lon(event.getLocationLon())
-                .build());
-        eventDtoOutFull.id(event.getId());
-        eventDtoOutFull.annotation(event.getAnnotation());
-        eventDtoOutFull.category(CategoryMapper.INSTANCE.toCategoryDto(event.getCategoryId()));
-        eventDtoOutFull.confirmedRequests(
-                (event.getRequests() != null) ?
-                        event.getRequests().stream()
-                                .filter(i -> i.getStatus().equals(EventState.CONFIRMED))
-                                .count() : 0);
-        eventDtoOutFull.createdOn(event.getCreatedOn());
-        eventDtoOutFull.description(event.getDescription());
-        eventDtoOutFull.eventDate(event.getEventDate());
-        eventDtoOutFull.initiator(UserMapper.INSTANCE.toUserDto(event.getInitiator()));
-        eventDtoOutFull.paid(event.getPaid());
-        eventDtoOutFull.participantLimit(event.getParticipantLimit());
-        eventDtoOutFull.publishedOn(event.getPublishedOn());
-        eventDtoOutFull.requestModeration(event.getRequestModeration());
-        eventDtoOutFull.state(event.getState());
-        eventDtoOutFull.title(event.getTitle());
-        return eventDtoOutFull.build();
+        return EventDtoOutFull.builder()
+                .id(event.getId())
+                .location(Location.builder()
+                        .lat(event.getLocationLat())
+                        .lon(event.getLocationLon())
+                        .build())
+                .annotation(event.getAnnotation())
+                .category(CategoryMapper.INSTANCE.toCategoryDto(event.getCategoryId()))
+                .confirmedRequests(
+                        (event.getRequests() != null) ?
+                                event.getRequests().stream()
+                                        .filter(i -> i.getStatus().equals(EventState.CONFIRMED))
+                                        .count() : 0)
+                .createdOn(event.getCreatedOn())
+                .description(event.getDescription())
+                .eventDate(event.getEventDate())
+                .initiator(UserMapper.INSTANCE.toUserDto(event.getInitiator()))
+                .paid(event.getPaid())
+                .participantLimit(event.getParticipantLimit())
+                .publishedOn(event.getPublishedOn())
+                .requestModeration(event.getRequestModeration())
+                .state(event.getState())
+                .title(event.getTitle())
+                .build();
     }
 
-    default void patchingEvent(EventDtoInPatch eventDtoInPatch, @MappingTarget Event event) {
+    default void patchingEvent(EventDtoInPatch eventDtoInPatch, @MappingTarget Event eventTarget) {
         if (eventDtoInPatch == null) {
             return;
         }
         if (eventDtoInPatch.getAnnotation() != null) {
-            event.setAnnotation(eventDtoInPatch.getAnnotation());
+            eventTarget.setAnnotation(eventDtoInPatch.getAnnotation());
         }
         if (eventDtoInPatch.getCategory() != null) {
-            event.setCategoryId(Category.builder().id(eventDtoInPatch.getCategory()).build());
+            eventTarget.setCategoryId(Category.builder().id(eventDtoInPatch.getCategory()).build());
         }
         if (eventDtoInPatch.getDescription() != null) {
-            event.setDescription(eventDtoInPatch.getDescription());
+            eventTarget.setDescription(eventDtoInPatch.getDescription());
         }
         if (eventDtoInPatch.getEventDate() != null) {
-            event.setEventDate(eventDtoInPatch.getEventDate());
+            eventTarget.setEventDate(eventDtoInPatch.getEventDate());
         }
         if (eventDtoInPatch.getPaid() != null) {
-            event.setPaid(eventDtoInPatch.getPaid());
+            eventTarget.setPaid(eventDtoInPatch.getPaid());
         }
         if (eventDtoInPatch.getParticipantLimit() != null) {
-            event.setParticipantLimit(eventDtoInPatch.getParticipantLimit());
+            eventTarget.setParticipantLimit(eventDtoInPatch.getParticipantLimit());
         }
         if (eventDtoInPatch.getTitle() != null) {
-            event.setTitle(eventDtoInPatch.getTitle());
+            eventTarget.setTitle(eventDtoInPatch.getTitle());
         }
     }
 

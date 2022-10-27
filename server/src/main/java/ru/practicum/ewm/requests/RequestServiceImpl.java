@@ -62,9 +62,7 @@ public class RequestServiceImpl implements RequestService {
         try {
             return RequestMapper.INSTANCE.toRequestDtoFromRequest(requestRepository.save(request));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Save request of user method", "request category"));
         }
     }
@@ -80,9 +78,7 @@ public class RequestServiceImpl implements RequestService {
         try {
             return RequestMapper.INSTANCE.toRequestDtoFromRequest(requestRepository.save(request));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Cancel request of user method", "request category"));
         }
     }

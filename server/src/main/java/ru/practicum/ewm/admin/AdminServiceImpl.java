@@ -50,9 +50,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             return UserMapper.INSTANCE.toUserDto(userRepository.save(user));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Save user method", "admin category"));
         }
     }
@@ -81,9 +79,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             userRepository.deleteById(userId);
         } catch (EmptyResultDataAccessException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Delete user method", "admin category"));
         }
     }
@@ -98,9 +94,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             return CategoryMapper.INSTANCE.toCategoryDto(categoryRepository.save(category));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Save category method", "admin category"));
         }
     }
@@ -113,9 +107,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             return CategoryMapper.INSTANCE.toCategoryDto(categoryRepository.save(category));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Patch category method", "admin category"));
         }
     }
@@ -125,14 +117,12 @@ public class AdminServiceImpl implements AdminService {
         Category category = commonService.getCategoryInDb(catId);
         List<Event> events = eventRepository.findAllByCategoryId(category);
         if (events.size() > 0) {
-            throw new ValidationException("There is events in this Category.");
+            throw new ValidationException("There is no events in this Category.");
         }
         try {
             categoryRepository.deleteById(catId);
         } catch (EmptyResultDataAccessException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Delete category method", "admin category"));
         }
     }
@@ -142,47 +132,43 @@ public class AdminServiceImpl implements AdminService {
     public Collection<EventDtoOutFull> getEvents(@Nullable List<Long> users, @Nullable List<EventState> states,
                                                  @Nullable List<Long> categories, @Nullable LocalDateTime rangeStart,
                                                  @Nullable LocalDateTime rangeEnd, Integer from, Integer size) {
-        List<Event> events = eventRepository.findAll(commonService.getPagination(from, size, null))
-                .stream().collect(Collectors.toList());
+        List<Event> events = new ArrayList<>();
         if (users != null) {
-            events = events.stream().filter(element -> {
-                for (Long i : users) {
-                    if (element.getInitiator().getId().equals(i)) {
-                        return true;
+            if (states != null) {
+                for (Long userId : users) {
+                    for (EventState state : states) {
+                        val elements = eventRepository.findAllByInitiatorAndState(
+                                commonService.getUserInDb(userId), state);
+                        if (!elements.isEmpty()) {
+                            events.addAll(elements);
+                        }
                     }
                 }
-                return false;
-            }).collect(Collectors.toList());
-        }
-        if (states != null) {
-            events = events.stream().filter(element -> {
-                for (EventState state : states) {
-                    if (element.getState().equals(state)) {
-                        return true;
+            } else {
+                for (Long userId : users) {
+                    val elements = eventRepository.findAllByInitiator(
+                            commonService.getUserInDb(userId));
+                    if (!elements.isEmpty()) {
+                        events.addAll(elements);
                     }
                 }
-                return false;
-            }).collect(Collectors.toList());
-        }
-        if (categories != null) {
-            events = events.stream().filter(element -> {
-                for (Long i : categories) {
-                    if (element.getCategoryId().getId().equals(i)) {
-                        return true;
-                    }
+            }
+        } else if (states != null) {
+            for (EventState state : states) {
+                val elements = eventRepository.findAllByState(state);
+                if (!elements.isEmpty()) {
+                    events.addAll(elements);
                 }
-                return false;
-            }).collect(Collectors.toList());
+            }
+        } else {
+            events = eventRepository.findAll();
         }
-        if (rangeStart != null) {
-            events = events.stream().filter(element -> element.getEventDate().isAfter(rangeStart))
-                    .collect(Collectors.toList());
-        }
-        if (rangeEnd != null) {
-            events = events.stream().filter(element -> element.getEventDate().isBefore(rangeEnd))
-                    .collect(Collectors.toList());
-        }
-        return events.stream().map(commonService::addViewsToEventFull).collect(Collectors.toList());
+        events = commonService.filterEventsByCategory(events, categories);
+        events = commonService.filterEventsByRangeStart(events, rangeStart);
+        events = commonService.filterEventsByRangeEnd(events, rangeEnd);
+        return new PageImpl<>(events.stream().map(commonService::addViewsToEventFull).collect(Collectors.toList()),
+                commonService.getPagination(from, size, null), events.size()).stream()
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -192,9 +178,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Patch event method", "admin category"));
         }
     }
@@ -204,16 +188,14 @@ public class AdminServiceImpl implements AdminService {
         Event event = commonService.getEventInDb(eventId);
         if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1)) ||
                 !event.getState().equals(EventState.PENDING)) {
-            throw new ValidationException("Only pending or canceled events can be changed");
+            throw new ValidationException("Only pending events can be publish");
         }
         event.setState(EventState.PUBLISHED);
         event.setPublishedOn(LocalDateTime.now());
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Patch event publish method", "admin category"));
         }
     }
@@ -223,15 +205,13 @@ public class AdminServiceImpl implements AdminService {
         Event event = commonService.getEventInDb(eventId);
         if (event.getEventDate().isBefore(LocalDateTime.now().plusHours(1)) ||
                 event.getState().equals(EventState.PUBLISHED)) {
-            throw new ValidationException("Only pending or canceled events can be changed");
+            throw new ValidationException("Only pending events can be publish");
         }
         event.setState(EventState.CANCELED);
         try {
             return commonService.addViewsToEventFull(eventRepository.save(event));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Patch event reject method", "admin category"));
         }
     }
@@ -247,9 +227,7 @@ public class AdminServiceImpl implements AdminService {
             return CompilationMapper.INSTANCE
                     .toCompilationDtoOutFromCompilation(compilationRepository.save(compilation));
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Save compilation method", "admin category"));
         }
     }
@@ -259,9 +237,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             compilationRepository.deleteById(compId);
         } catch (EmptyResultDataAccessException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Delete compilation method", "admin category"));
         }
     }
@@ -272,7 +248,7 @@ public class AdminServiceImpl implements AdminService {
         Optional<Event> checkEvent = compilation.getEvents().stream()
                 .filter(i -> i.getId().equals(eventId)).findFirst();
         if (!checkEvent.isPresent()) {
-            throw new NotFoundException("Only pending or canceled events can be changed");
+            throw new NotFoundException("There is no this event in compilation");
         }
         Set<Event> eventSet = compilation.getEvents().stream()
                 .filter(i -> !i.getId().equals(eventId))
@@ -281,9 +257,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             compilationRepository.save(compilation);
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Delete event from compilation method", "admin category"));
         }
     }
@@ -294,7 +268,7 @@ public class AdminServiceImpl implements AdminService {
         val checkEvent = compilation.getEvents().stream()
                 .filter(i -> i.getId().equals(eventId)).findFirst();
         if (checkEvent.isPresent()) {
-            throw new NotFoundException("Only pending or canceled events can be changed");
+            throw new NotFoundException("This event is already in compilation");
         }
         Set<Event> events = compilation.getEvents();
         events.add(commonService.getEventInDb(eventId));
@@ -302,9 +276,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             compilationRepository.save(compilation);
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Add event to compilation method", "admin category"));
         }
     }
@@ -316,9 +288,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             compilationRepository.save(compilation);
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Unpin compilation method", "admin category"));
         }
     }
@@ -330,9 +300,7 @@ public class AdminServiceImpl implements AdminService {
         try {
             compilationRepository.save(compilation);
         } catch (DataIntegrityViolationException e) {
-            throw new IntegrityViolationException(String.format("could not execute statement; SQL %s; " +
-                            "constraint %s; nested exception is " +
-                            "org.hibernate.exception.ConstraintViolationException: could not execute statement",
+            throw new IntegrityViolationException(String.format("Error with method %s in %s",
                     "Pin compilation method", "admin category"));
         }
     }

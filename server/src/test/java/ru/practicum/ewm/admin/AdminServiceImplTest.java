@@ -310,8 +310,18 @@ public class AdminServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         when(commonService.getPagination(anyInt(), anyInt(), any()))
                 .thenReturn(pageable);
-        when(eventRepository.findAll(pageable))
-                .thenReturn(new PageImpl<>(events));
+        when(commonService.getUserInDb(anyLong()))
+                .thenReturn(user1)
+                .thenReturn(user2);
+        when(eventRepository.findAllByInitiator(any(User.class)))
+                .thenReturn(List.of(event1))
+                .thenReturn(List.of(event2));
+        when(commonService.filterEventsByCategory(anyList(), any()))
+                .thenReturn(events);
+        when(commonService.filterEventsByRangeStart(anyList(), any()))
+                .thenReturn(events);
+        when(commonService.filterEventsByRangeEnd(anyList(), any()))
+                .thenReturn(events);
         when(commonService.addViewsToEventFull(event1))
                 .thenReturn(eventDtoOutFull1);
         when(commonService.addViewsToEventFull(event2))
@@ -325,8 +335,16 @@ public class AdminServiceImplTest {
 
         verify(commonService, times(1))
                 .getPagination(anyInt(), anyInt(), any());
-        verify(eventRepository, times(1))
-                .findAll(pageable);
+        verify(commonService, times(2))
+                .getUserInDb(anyLong());
+        verify(eventRepository, times(2))
+                .findAllByInitiator(any(User.class));
+        verify(commonService, times(1))
+                .filterEventsByCategory(anyList(), any());
+        verify(commonService, times(1))
+                .filterEventsByRangeStart(anyList(), any());
+        verify(commonService, times(1))
+                .filterEventsByRangeEnd(anyList(), any());
         verify(commonService, times(1))
                 .addViewsToEventFull(event1);
         verify(commonService, times(1))
