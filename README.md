@@ -14,6 +14,7 @@ https://github.com/SergeyMazurtsev/java-explore-with-me/pull/1
 
 В файле docker-compose.yml прописаны все необходимые переменные окружения.
 
+
 # При необходимости запуска программы без docker-compose.yml на локальной компьютере, необходимо:
 - необходимо запустить в терминале: docker run --name postgre -p 5555:5432 -e POSTGRES_PASSWORD=pass -d postgres:14-alpine
 - в файле application.properties пакета server закомментировать строчки 13, 14, 16, 17, 18 с привязкой внешних переменных окружений. 
