@@ -5,8 +5,10 @@ import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.ewm.admin.dto.CategoryDto;
 import ru.practicum.ewm.admin.dto.UserDto;
+import ru.practicum.ewm.comments.dto.CommentDtoOut;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -27,4 +29,6 @@ public class EventDtoOutShort {
     private Boolean paid;
     private String title;
     private Long views;
+    private Double averageRating;
+    private Set<CommentDtoOut> comments;
 }

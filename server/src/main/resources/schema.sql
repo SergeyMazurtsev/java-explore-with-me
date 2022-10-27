@@ -1,3 +1,4 @@
+drop table if exists comments cascade;
 drop table if exists compilations_events cascade;
 drop table if exists requests cascade;
 drop table if exists events cascade;
@@ -63,4 +64,16 @@ create table if not exists compilations_events
     event_id    bigint,
     constraint fk_compilation_events_to_compilation foreign key (compilation_id) references compilations (id) on delete cascade,
     constraint fk_compilation_events_to_event foreign key (event_id) references events (id) on delete cascade
+);
+
+create table if not exists comments
+(
+    id           bigint generated always as identity primary key,
+    commentor_id bigint,
+    event_id     bigint,
+    comment      varchar,
+    created      timestamp,
+    rating       int,
+    constraint fk_commentor_to_user foreign key (commentor_id) references users (id) on delete cascade,
+    constraint fk_event_to_event foreign key (event_id) references events(id) on delete cascade
 );
